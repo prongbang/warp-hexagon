@@ -1,14 +1,14 @@
 use std::convert::Infallible;
 use warp;
 use crate::core::response;
-use crate::customer::model::Customer;
+use crate::customer;
+use crate::customer::domain::model::Customer;
 use crate::locator::service_locator;
 
 pub async fn fetch_all(
     locator: service_locator::ServiceLocator,
 ) -> Result<impl warp::Reply, Infallible> {
-    let use_case = locator.get_customer_list_use_case.clone();
-    match use_case.execute().await {
+    match customer::domain::get_customer_list::execute(locator.customer_repo).await {
         Ok(customers) => {
             Ok(response::success(&customers))
         }
@@ -23,8 +23,7 @@ pub async fn create(
     new_customer: Customer,
     locator: service_locator::ServiceLocator,
 ) -> Result<impl warp::Reply, Infallible> {
-    let use_case = locator.create_customer_use_case.clone();
-    match use_case.execute(new_customer).await {
+    match customer::domain::create_customer::execute(locator.customer_repo, new_customer).await {
         Ok(customer) => Ok(response::success(&customer)),
         Err(_) => Ok(response::bad_request("bad-request"))
     }
@@ -34,8 +33,7 @@ pub async fn fetch_one(
     guid: String,
     locator: service_locator::ServiceLocator,
 ) -> Result<Box<dyn warp::Reply>, Infallible> {
-    let use_case = locator.get_customer_one_use_cae.clone();
-    match use_case.execute(guid).await {
+    match customer::domain::get_customer::execute(locator.customer_repo, guid).await {
         Ok(customer) => Ok(Box::new(response::success(&customer))),
         Err(_) => Ok(Box::new(response::not_found("not-found")))
     }
@@ -46,8 +44,7 @@ pub async fn update(
     update_customer: Customer,
     locator: service_locator::ServiceLocator,
 ) -> Result<impl warp::Reply, Infallible> {
-    let use_case = locator.update_customer_use_case.clone();
-    match use_case.execute(guid, update_customer).await {
+    match customer::domain::update_customer::execute(locator.customer_repo, guid, update_customer).await {
         Ok(customer) => Ok(Box::new(response::success(&customer))),
         Err(_) => Ok(Box::new(response::not_found("not-found")))
     }
@@ -57,8 +54,7 @@ pub async fn delete(
     guid: String,
     locator: service_locator::ServiceLocator,
 ) -> Result<impl warp::Reply, Infallible> {
-    let use_case = locator.delete_customer_use_case.clone();
-    match use_case.execute(guid).await {
+    match customer::domain::delete_customer::execute(locator.customer_repo, guid).await {
         Ok(_) => Ok(Box::new(response::success_message())),
         Err(_) => Ok(Box::new(response::not_found("not-found")))
     }

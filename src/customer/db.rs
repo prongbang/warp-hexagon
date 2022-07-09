@@ -6,7 +6,7 @@ use serde_json::from_reader;
 use tokio::sync::Mutex;
 use warp::Filter;
 
-use crate::customer::model::Customer;
+use crate::customer::domain::model::Customer;
 
 pub type Db = Arc<Mutex<Vec<Customer>>>;
 

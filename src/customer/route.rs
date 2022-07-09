@@ -1,7 +1,7 @@
 use warp::{self, Filter};
 
 use crate::customer::handler;
-use crate::customer::model::Customer;
+use crate::customer::domain::model::Customer;
 use crate::locator::service_locator;
 use crate::locator::service_locator::with_service_locator;
 
