@@ -105,3 +105,15 @@ Response
   "data": null
 }
 ```
+
+## Health check postgres connection
+
+```shell
+curl http://localhost:3000/health
+```
+
+Response
+
+```json
+
+```
