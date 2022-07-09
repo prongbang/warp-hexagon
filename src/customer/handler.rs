@@ -1,83 +1,65 @@
 use std::convert::Infallible;
-use warp::{self, http::StatusCode};
-use crate::customer::db::Db;
+use warp;
+use crate::core::response;
 use crate::customer::model::Customer;
+use crate::locator::service_locator;
 
-pub async fn list_customers(
-    db: Db,
+pub async fn fetch_all(
+    locator: service_locator::ServiceLocator,
 ) -> Result<impl warp::Reply, Infallible> {
-    let customers = db.lock().await;
-    let customers: Vec<Customer> = customers.clone();
-
-    Ok(warp::reply::json(&customers))
+    let use_case = locator.get_customer_list_use_case.clone();
+    match use_case.execute().await {
+        Ok(customers) => {
+            Ok(response::success(&customers))
+        }
+        Err(_) => {
+            let v: Vec<Customer> = Vec::new();
+            Ok(response::success(&v))
+        }
+    }
 }
 
-pub async fn create_customers(
+pub async fn create(
     new_customer: Customer,
-    db: Db,
+    locator: service_locator::ServiceLocator,
 ) -> Result<impl warp::Reply, Infallible> {
-    let mut customers = db.lock().await;
-
-    // Validate data duplicate
-    for c in customers.iter() {
-        if c.guid == new_customer.guid {
-            return Ok(StatusCode::BAD_REQUEST);
-        }
+    let use_case = locator.create_customer_use_case.clone();
+    match use_case.execute(new_customer).await {
+        Ok(customer) => Ok(response::success(&customer)),
+        Err(_) => Ok(response::bad_request("bad-request"))
     }
-
-    // Create
-    customers.push(new_customer);
-
-    Ok(StatusCode::CREATED)
 }
 
-pub async fn get_customer(
+pub async fn fetch_one(
     guid: String,
-    db: Db,
+    locator: service_locator::ServiceLocator,
 ) -> Result<Box<dyn warp::Reply>, Infallible> {
-    let customers = db.lock().await;
-
-    // Find customer by guid
-    for c in customers.iter() {
-        if c.guid == guid {
-            return Ok(Box::new(warp::reply::json(&c)));
-        }
+    let use_case = locator.get_customer_one_use_cae.clone();
+    match use_case.execute(guid).await {
+        Ok(customer) => Ok(Box::new(response::success(&customer))),
+        Err(_) => Ok(Box::new(response::not_found("not-found")))
     }
-
-    Ok(Box::new(StatusCode::NOT_FOUND))
 }
 
-pub async fn update_customer(
+pub async fn update(
     guid: String,
     update_customer: Customer,
-    db: Db,
+    locator: service_locator::ServiceLocator,
 ) -> Result<impl warp::Reply, Infallible> {
-    let mut customers = db.lock().await;
-
-    for c in customers.iter_mut() {
-        if c.guid == guid {
-            *c = update_customer;
-            return Ok(StatusCode::OK);
-        }
+    let use_case = locator.update_customer_use_case.clone();
+    match use_case.execute(guid, update_customer).await {
+        Ok(customer) => Ok(Box::new(response::success(&customer))),
+        Err(_) => Ok(Box::new(response::not_found("not-found")))
     }
-
-    Ok(StatusCode::NOT_FOUND)
 }
 
-pub async fn delete_customer(
+pub async fn delete(
     guid: String,
-    db: Db,
+    locator: service_locator::ServiceLocator,
 ) -> Result<impl warp::Reply, Infallible> {
-    let mut customers = db.lock().await;
-
-    let customer_count = customers.len();
-
-    customers.retain(|customer| customer.guid != guid);
-
-    let deleted = customers.len() != customer_count;
-    if deleted {
-        return Ok(StatusCode::NOT_FOUND);
+    let use_case = locator.delete_customer_use_case.clone();
+    match use_case.execute(guid).await {
+        Ok(_) => Ok(Box::new(response::success_message())),
+        Err(_) => Ok(Box::new(response::not_found("not-found")))
     }
-
-    Ok(StatusCode::NOT_FOUND)
 }

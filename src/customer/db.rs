@@ -1,8 +1,10 @@
+use std::convert::Infallible;
 use std::fs::File;
 use std::sync::Arc;
 
 use serde_json::from_reader;
 use tokio::sync::Mutex;
+use warp::Filter;
 
 use crate::customer::model::Customer;
 
@@ -19,4 +21,8 @@ pub fn init_db() -> Db {
             Arc::new(Mutex::new(Vec::new()))
         }
     }
+}
+
+fn with_db(db: Db) -> impl Filter<Extract=(Db, ), Error=Infallible> + Clone {
+    warp::any().map(move || db.clone())
 }

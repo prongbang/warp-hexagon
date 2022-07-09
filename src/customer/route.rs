@@ -1,74 +1,72 @@
-use std::convert::Infallible;
 use warp::{self, Filter};
 
-use crate::customer::db::Db;
 use crate::customer::handler;
 use crate::customer::model::Customer;
+use crate::locator::service_locator;
+use crate::locator::service_locator::with_service_locator;
 
-pub fn customer_routes(db: Db) -> impl Filter<Extract=impl warp::Reply, Error=warp::Rejection> + Clone {
-    get_customer(db.clone())
-        .or(update_customer(db.clone()))
-        .or(delete_customer(db.clone()))
-        .or(create_customer(db.clone()))
-        .or(list_customers(db.clone()))
+pub fn customer_routes(
+    locator: service_locator::ServiceLocator,
+) -> impl Filter<Extract=impl warp::Reply, Error=warp::Rejection> + Clone {
+    get_customer(locator.clone())
+        .or(update_customer(locator.clone()))
+        .or(delete_customer(locator.clone()))
+        .or(create_customer(locator.clone()))
+        .or(list_customers(locator.clone()))
 }
 
 /// GET /customer
 pub fn list_customers(
-    db: Db,
+    locator: service_locator::ServiceLocator,
 ) -> impl Filter<Extract=impl warp::Reply, Error=warp::Rejection> + Clone {
     warp::path!("customer")
         .and(warp::get())
-        .and(with_db(db))
-        .and_then(handler::list_customers)
+        .and(with_service_locator(locator))
+        .and_then(handler::fetch_all)
 }
 
 /// POST /customer
 pub fn create_customer(
-    db: Db,
+    locator: service_locator::ServiceLocator,
 ) -> impl Filter<Extract=impl warp::Reply, Error=warp::Rejection> + Clone {
     warp::path!("customer")
         .and(warp::post())
         .and(json_body())
-        .and(with_db(db))
-        .and_then(handler::create_customers)
+        .and(with_service_locator(locator))
+        .and_then(handler::create)
 }
 
 /// GET /customer/{guid}
 pub fn get_customer(
-    db: Db,
+    locator: service_locator::ServiceLocator,
 ) -> impl Filter<Extract=impl warp::Reply, Error=warp::Rejection> + Clone {
     warp::path!("customer" / String)
         .and(warp::get())
-        .and(with_db(db))
-        .and_then(handler::get_customer)
+        .and(with_service_locator(locator))
+        .and_then(handler::fetch_one)
 }
 
 /// PUT /customer/{guid}
 pub fn update_customer(
-    db: Db,
+    locator: service_locator::ServiceLocator,
 ) -> impl Filter<Extract=impl warp::Reply, Error=warp::Rejection> + Clone {
     warp::path!("customer" / String)
         .and(warp::put())
         .and(json_body())
-        .and(with_db(db))
-        .and_then(handler::update_customer)
+        .and(with_service_locator(locator))
+        .and_then(handler::update)
 }
 
 /// DELETE /customer/{guid}
 pub fn delete_customer(
-    db: Db,
+    locator: service_locator::ServiceLocator,
 ) -> impl Filter<Extract=impl warp::Reply, Error=warp::Rejection> + Clone {
     warp::path!("customer" / String)
         .and(warp::delete())
-        .and(with_db(db))
-        .and_then(handler::delete_customer)
+        .and(with_service_locator(locator))
+        .and_then(handler::delete)
 }
 
-fn with_db(db: Db) -> impl Filter<Extract = (Db,), Error = Infallible> + Clone {
-    warp::any().map(move || db.clone())
-}
-
-fn json_body() -> impl Filter<Extract = (Customer,), Error = warp::Rejection> + Clone {
+fn json_body() -> impl Filter<Extract=(Customer, ), Error=warp::Rejection> + Clone {
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
