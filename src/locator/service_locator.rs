@@ -2,7 +2,7 @@ use std::convert::Infallible;
 use std::sync::Arc;
 use warp::Filter;
 use crate::customer;
-use crate::customer::db::Db;
+use crate::customer::data::db::Db;
 
 #[derive(Clone)]
 pub struct ServiceLocator {

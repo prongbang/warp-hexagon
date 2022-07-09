@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use async_trait::async_trait;
 use crate::core::error::Error;
-use crate::customer::db::Db;
+use crate::customer::data::db::Db;
 use crate::customer::domain::model::Customer;
 use crate::customer::repository::repository::Repository;
 

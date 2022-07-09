@@ -8,7 +8,7 @@ use crate::locator::service_locator::ServiceLocator;
 #[tokio::main]
 async fn main() {
     // Initialize
-    let db = customer::db::init_db();
+    let db = customer::data::db::init_db();
     let customer_repo = customer::repository::in_local_repository::InLocalRepository::new(db.clone());
 
     // Service Locator
