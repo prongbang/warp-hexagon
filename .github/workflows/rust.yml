@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        toolchain: [stable, nightly]
+        toolchain: [stable]
     continue-on-error: true
     steps:
       - name: Checkout repository
