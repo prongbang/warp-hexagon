@@ -13,3 +13,27 @@ run_postgres:
 
 run:
 	cargo run
+
+# Test coverage
+# - https://marco-c.github.io/2020/11/24/rust-source-based-code-coverage.html
+# - https://github.com/mozilla/grcov
+install_cov_requirement:
+	cargo install grcov
+	# 1. Install the llvm-tools or llvm-tools-preview component:
+	rustup component add llvm-tools-preview
+
+test_cov:
+	# 2. Ensure that the following environment variable is set up:
+	export RUSTFLAGS="-Cinstrument-coverage"
+	# 3. Build your code:
+	cargo build
+	# 4. Ensure each test runs gets its own profile information by defining the LLVM_PROFILE_FILE environment variable
+	# (%p will be replaced by the process ID, and %m by the binary signature):
+	make generate_coverage
+
+generate_coverage:
+	# 5. Run your tests:
+	LLVM_PROFILE_FILE="warp-hexagon-%p-%m.profraw" cargo test
+	# 6. Generate a coverage report from coverage artifacts
+	grcov . -b ./target/debug/ -s . -t lcov --branch --ignore-not-existing -o ./coverage/lcov.info
+	grcov . -b ./target/debug/ -s . -t html --branch --ignore-not-existing -o ./coverage/html
