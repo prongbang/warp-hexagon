@@ -100,7 +100,7 @@ jobs:
         run: cargo test --verbose
       - name: Generate coverage
         run: |
-          ./target/debug/grcov $(find . -name "grcov-*.profraw" -print) \
+          grcov $(find . -name "grcov-*.profraw" -print) \
             --branch \
             --ignore-not-existing \
             --binary-path ./target/debug/ \
